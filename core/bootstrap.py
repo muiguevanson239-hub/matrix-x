@@ -1,69 +1,38 @@
-from core.intelligent_db import IntelligentDB
 from core.retrieval_engine import RetrievalEngine
-from core.index_engine import IndexEngine
-from core.api_gateway import APIGateway
-from core.query_engine import QueryEngine
-from core.tenant_db import TenantDB
-from core.orchestrator import Orchestrator
 
 
 class MatrixX:
 
-    def __init__(self):
+    def __init__(self, memory=None):
 
-        # ---------------------------------
-        # CORE DATABASE
-        # ---------------------------------
-        self.db = IntelligentDB()
+        self.memory = memory or {}
+        self.engine = RetrievalEngine()
 
-        # ---------------------------------
-        # RETRIEVAL LAYER
-        # ---------------------------------
-        self.retrieval = RetrievalEngine(self.db)
+    # -------------------------
+    # LOAD MEMORY
+    # -------------------------
+    def load_memory(self, memory_dict):
+        self.memory = memory_dict
 
-        # ---------------------------------
-        # INDEX LAYER
-        # ---------------------------------
-        self.index = IndexEngine(self.db, self.retrieval)
+    # -------------------------
+    # QUERY SYSTEM
+    # -------------------------
+    def query(self, text: str):
 
-        # build initial index
-        self.index.build_index()
+        results = self.engine.search_memory(self.memory, text)
 
-        # ---------------------------------
-        # QUERY ENGINE
-        # ---------------------------------
-        self.query_engine = QueryEngine(
-            self.db,
-            self.index,
-            self.retrieval
-        )
+        return {
+            "query": text,
+            "results": results,
+            "status": "ok"
+        }
 
-        # ---------------------------------
-        # TENANT SYSTEM
-        # ---------------------------------
-        self.tenants = TenantDB()
+    # -------------------------
+    # HEALTH CHECK
+    # -------------------------
+    def health(self):
 
-        # ---------------------------------
-        # API GATEWAY
-        # ---------------------------------
-        self.gateway = APIGateway()
-
-        # ---------------------------------
-        # ORCHESTRATOR (CORE BRAIN)
-        # ---------------------------------
-        self.orchestrator = Orchestrator(
-            self.gateway,
-            self.tenants,
-            self.query_engine
-        )
-
-    # ---------------------------------
-    # SINGLE ENTRY POINT
-    # ---------------------------------
-    def handle(self, api_key, tenant_id, query):
-
-        return self.orchestrator.handle(
-            api_key,
-            tenant_id,
-            query
-        )
+        return {
+            "status": "online",
+            "memory_size": len(self.memory)
+        }
